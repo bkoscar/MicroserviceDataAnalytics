@@ -1,0 +1,54 @@
+services:
+  api:
+    build: ./api   
+    container_name: synthetic_api_container
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - ./api/src:/app/src
+
+  etl:
+    build: ./etl   
+    container_name: synthetic_etl_container
+    depends_on:
+      - api
+      - db
+    volumes:
+      - ./etl/src:/app/src
+
+  db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    container_name: synthetic_db_container
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: synthetic_pgadmin_container
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+  dashboard:
+    build: ./dashboard   
+    container_name: synthetic_dashboard_container
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./dashboard/src:/app/src
+
+volumes:
+  db-data:
